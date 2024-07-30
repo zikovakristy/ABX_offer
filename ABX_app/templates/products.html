@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Produkty{% endblock %}
+
+{% block content %}
+<h2>Produkty</h2>
+
+<form method="get" action="">
+    <input type="text" name="name" placeholder="Název" value="{{ request.GET.name }}">
+    <input type="text" name="item_code" placeholder="Kód produktu" value="{{ request.GET.item_code }}">
+    <label><input type="checkbox" name="HS" {% if 'HS' in request.GET %}checked{% endif %}> HS</label>
+    <label><input type="checkbox" name="AS" {% if 'AS' in request.GET %}checked{% endif %}> AS</label>
+    <label><input type="checkbox" name="RC" {% if 'RC' in request.GET %}checked{% endif %}> RC</label>
+    <label><input type="checkbox" name="PC" {% if 'PC' in request.GET %}checked{% endif %}> PC</label>
+    <label><input type="checkbox" name="default" {% if 'default' in request.GET %}checked{% endif %}> Default</label>
+    <label><input type="checkbox" name="sleva" {% if 'sleva' in request.GET %}checked{% endif %}> Sleva</label>
+    <button type="submit">Filtruj</button>
+    <a href="{% url 'products' %}"><button type="button">Vymaž filtr</button></a>
+</form>
+
+<table>
+    <tr>
+        <th>Název</th>
+        <th>Kód produktu</th>
+        <th>Popis</th>
+        <th>Prodejní cena</th>
+        <th>Nákupní cena</th>
+        <th>Typ produktu</th>
+        <th>DPH</th>
+        <th>URL</th>
+        <th>HS</th>
+        <th>AS</th>
+        <th>RC</th>
+        <th>PC</th>
+        <th>Default</th>
+        <th>Sleva</th>
+        <th>Akce</th>
+    </tr>
+    {% for product in products %}
+    <tr>
+        <td>{{ product.name }}</td>
+        <td>{{ product.item_code }}</td>
+        <td>{{ product.description }}</td>
+        <td>{{ product.sale_price }}</td>
+        <td>{{ product.purchase_price }}</td>
+        <td>{{ product.product_type.name }}</td>
+        <td>{{ product.DPH }}</td>
+        <td><a href="{{ product.url }}" target="_blank">Odkaz</a></td>
+        <td>{{ product.HS }}</td>
+        <td>{{ product.AS }}</td>
+        <td>{{ product.RC }}</td>
+        <td>{{ product.PC }}</td>
+        <td>{{ product.default }}</td>
+        <td>{{ product.sleva }}</td>
+        <td><button type="button" onclick="openModal({ product_id })">Editovat</button></td>
+    </tr>
+    {% endfor %}
+</table>
+
+<!-- Modální okno pro editaci produktu -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2>Editace produktu</h2>
+        <form method="post" action="" id="editForm">
+            {% csrf_token %}
+            <input type="hidden" id="product_id" name="product_id">
+            
+            <!-- Základní informace -->
+            <div class="bubble">
+                <label for="item_code">Kód produktu:</label>
+                <input type="text" id="item_code" name="item_code" required>
+                
+                <label for="name">Název:</label>
+                <input type="text" id="name" name="name" required>
+                
+                <label for="url">URL:</label>
+                <input type="url" id="url" name="url">
+                
+                <label for="description">Popis:</label>
+                <textarea id="description" name="description"></textarea>
+            </div>
+            
+            <!-- Cena -->
+            <div class="bubble">
+                <label for="purchase_price">Nákupní cena:</label>
+                <input type="number" id="purchase_price" name="purchase_price" step="0.01" required>
+
+                <label for="sale_price">Prodejní cena:</label>
+                <input type="number" id="sale_price" name="sale_price" step="0.01" required>
+
+                <label for="DPH">DPH:</label>
+                <input type="number" id="DPH" name="DPH" step="0.01" required>
+
+                <label><input type="checkbox" name="sleva" id="sleva"> Sleva</label>
+            </div>
+
+            <!-- Checkboxy -->
+            <div class="bubble">
+                <label><input type="checkbox" name="HS" id="HS"> HS</label>
+                <label><input type="checkbox" name="AS" id="AS"> AS</label>
+                <label><input type="checkbox" name="RC" id="RC"> RC</label>
+                <label><input type="checkbox" name="PC" id="PC"> PC</label>
+                <label><input type="checkbox" name="default" id="default"> Default</label>
+            </div>
+
+            <!-- Typ produktu -->
+            <div class="bubble">
+                <label for="product_type">Typ produktu:</label>
+                <select id="product_type" name="product_type">
+                    {% for product_type in product_types %}
+                        <option value="{{ product_type.id }}">{{ product_type.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <button type="submit">Uložit</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function openModal(productId) {
+    fetch(`/get_product/${productId}/`)
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('product_id').value = data.id;
+        document.getElementById('item_code').value = data.item_code;
+        document.getElementById('name').value = data.name;
+        document.getElementById('url').value = data.url;
+        document.getElementById('description').value = data.description;
+        document.getElementById('purchase_price').value = data.purchase_price;
+        document.getElementById('sale_price').value = data.sale_price;
+        document.getElementById('DPH').value = data.DPH;
+        document.getElementById('HS').checked = data.HS;
+        document.getElementById('AS').checked = data.AS;
+        document.getElementById('RC').checked = data.RC;
+        document.getElementById('PC').checked = data.PC;
+        document.getElementById('default').checked = data.default;
+        document.getElementById('sleva').checked = data.sleva;
+        document.getElementById('product_type').value = data.product_type;
+    });
+
+    document.getElementById('editModal').style.display = "block";
+}
+
+function closeModal() {
+    document.getElementById('editModal').style.display = "none";
+}
+</script>
+
+<style>
+/* Styly pro modální okno */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgb(0,0,0);
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 10px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.bubble {
+    margin-bottom: 20px;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: #f1f1f1;
+    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
+}
+</style>
+
+{% endblock %}

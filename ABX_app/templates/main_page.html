@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Main Page{% endblock %}
+
+{% block content %}
+<div class="grid-container">
+    <div class="grid-item">
+        <a href="{% url 'offers' %}">Nabídky</a>
+    </div>
+    <div class="grid-item">
+        <a href="{% url 'new_offer' %}">Vytvořit novou nabídku</a>
+    </div>
+    <div class="grid-item">
+        <a href="{% url 'products' %}">Produkty</a>
+    </div>
+</div>
+{% endblock %}
